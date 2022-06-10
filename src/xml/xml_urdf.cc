@@ -302,6 +302,7 @@ void mjXURDF::Joint(XMLElement* joint_elem) {
   XMLElement *elem;
   mjCBody *pbody, *parent;
   mjCJoint *pjoint=0, *pjoint1=0, *pjoint2=0;
+  mjCActuator *pact=0;
   int jointtype;
 
   // get type and name
@@ -342,6 +343,14 @@ void mjXURDF::Joint(XMLElement* joint_elem) {
     pjoint->type = mjJNT_HINGE;
     mjuu_setvec(pjoint->pos, 0, 0, 0);
     mjuu_copyvec(pjoint->axis, axis, 3);
+    pact = model->AddActuator();
+    pact->name = jntname;
+    pact->dyntype = mjDYN_NONE;
+    pact->trntype = mjTRN_JOINT;
+    pact->gaintype = mjGAIN_FIXED;
+    pact->biastype = mjBIAS_NONE;
+    pact->gainprm[0] = 1.0;
+    pact->target = jntname;
     break;
 
   case 2:     // prismatic
@@ -350,6 +359,14 @@ void mjXURDF::Joint(XMLElement* joint_elem) {
     pjoint->type = mjJNT_SLIDE;
     mjuu_setvec(pjoint->pos, 0, 0, 0);
     mjuu_copyvec(pjoint->axis, axis, 3);
+    pact = model->AddActuator();
+    pact->name = jntname;
+    pact->dyntype = mjDYN_NONE;
+    pact->trntype = mjTRN_JOINT;
+    pact->gaintype = mjGAIN_FIXED;
+    pact->biastype = mjBIAS_NONE;
+    pact->gainprm[0] = 1.0;
+    pact->target = jntname;
     break;
 
   case 3:     // fixed- no joint, return
@@ -416,6 +433,11 @@ void mjXURDF::Joint(XMLElement* joint_elem) {
 
     // ReadAttr(elem, "velocity", 1, &pjoint->maxvel, text); // no maxvel in MuJoCo
     ReadAttr(elem, "effort", 1, &pjoint->urdfeffort, text);
+    if (pact) {
+      pact->ctrllimited = true;
+      pact->ctrlrange[0] = -pjoint->urdfeffort;
+      pact->ctrlrange[1] = pjoint->urdfeffort;
+    }
   } else {
     pjoint->limited = 0;
   }
