@@ -15,6 +15,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include <mujoco/mjmodel.h>
 #include "user/user_model.h"
@@ -75,7 +76,7 @@ void mjXURDF::Parse(XMLElement* root) {
   int id_parent, id_child, i;
 
   // set compiler defaults suitable for URDF
-  model->strippath = true;
+  model->strippath = false;
   model->discardvisual = true;
   model->fusestatic = true;
 
@@ -500,6 +501,28 @@ mjCGeom* mjXURDF::Geom(XMLElement* geom_elem, mjCBody* pbody, bool collision) {
     // strip file name if necessary
     if (model->strippath) {
       meshfile = mjuu_strippath(meshfile);
+    }
+    else {
+      // search from ROS_PACKAGE_PATH
+      std::string filename(meshfile);
+      size_t package_name_end = filename.find_first_of("/");
+      std::string fn_no_package_name = filename.substr(package_name_end + 1);
+      char* ros_package_path = strdup(std::getenv("ROS_PACKAGE_PATH"));
+      printf("ros_package_path: %s\n", ros_package_path);
+      if (ros_package_path) {
+        char* tok = strtok(ros_package_path, ":;");
+        while (tok) {
+          std::string attempt = std::string(tok) + fn_no_package_name;  // "/" is included in fn_no_package_name
+          std::ifstream ifst(attempt.c_str());
+          if (ifst) {
+            meshfile = attempt;
+            ifst.close();
+            break;
+          }
+          tok = strtok(NULL, ":;");
+        }
+        free(ros_package_path);
+      }
     }
 
     // construct mesh name: always stripped
