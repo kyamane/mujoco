@@ -508,7 +508,6 @@ mjCGeom* mjXURDF::Geom(XMLElement* geom_elem, mjCBody* pbody, bool collision) {
       size_t package_name_end = filename.find_first_of("/");
       std::string fn_no_package_name = filename.substr(package_name_end + 1);
       char* ros_package_path = strdup(std::getenv("ROS_PACKAGE_PATH"));
-      printf("ros_package_path: %s\n", ros_package_path);
       if (ros_package_path) {
         char* tok = strtok(ros_package_path, ":;");
         while (tok) {
